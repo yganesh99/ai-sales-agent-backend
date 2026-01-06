@@ -1,0 +1,34 @@
+{
+	"name": "express-boilerplate-backend",
+	"version": "1.0.0",
+	"description": "",
+	"main": "src/app.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {},
+	"homepage": "",
+	"dependencies": {
+		"bcryptjs": "^2.4.3",
+		"celebrate": "^15.x",
+		"cors": "^2.8.5",
+		"dotenv": "^16.x",
+		"express": "^4.18.2",
+		"express-rate-limit": "^6.x",
+		"helmet": "^7.x",
+		"jsonwebtoken": "^9.x",
+		"mongoose": "^7.x",
+		"morgan": "^1.10.0"
+	},
+	"devDependencies": {
+		"jest": "^29.x",
+		"nodemon": "^3.1.10",
+		"supertest": "^6.x"
+	}
+}
