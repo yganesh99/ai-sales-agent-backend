@@ -38,6 +38,27 @@ exports.login = async (req, res, next) => {
 	}
 };
 
+exports.googleCallback = async (req, res, next) => {
+	try {
+		const user = req.user;
+		const accessToken = tokenService.signAccessToken({
+			sub: user._id,
+			roles: user.roles,
+		});
+		const refreshToken = tokenService.signRefreshToken({ sub: user._id });
+
+		// Redirect to frontend with tokens (or handle as preferred)
+		// For now, redirecting to a placeholder frontend URL with tokens in query params
+		// In a real app, you might want to send a script that posts the message to opener or redirect to a route that sets cookies
+		const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+		res.redirect(
+			`${frontendUrl}?accessToken=${accessToken}&refreshToken=${refreshToken}`
+		);
+	} catch (err) {
+		next(err);
+	}
+};
+
 exports.refresh = async (req, res, next) => {
 	try {
 		const { refreshToken } = req.body;

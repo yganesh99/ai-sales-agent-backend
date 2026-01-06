@@ -15,16 +15,25 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 app.use(morgan('dev'));
 
-const limiter = rateLimit({
+require('./config/passport');
+const passport = require('passport');
+app.use(passport.initialize());
+
+// const limiter = rateLimit({
+// 	windowMs: 15 * 60 * 1000,
+// 	max: 200,
+// });
+// app.use(limiter);
+
+const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 200,
+	max: 10,
 });
-app.use(limiter);
 
 app.get('/health', (req, res) =>
 	res.json({ status: 'ok', uptime: process.uptime() })
 );
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Celebrate error handler first (request validation)
 app.use(errors());
