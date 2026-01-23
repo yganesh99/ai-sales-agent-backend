@@ -1,19 +1,29 @@
 const llmService = require('../services/digi.llm.service');
 const sessionStore = require('../services/sessionStore.service');
+const crypto = require('crypto');
 
 const SYSTEM_PROMPT = `You are an expert digital marketing assistant helping a user define a new marketing campaign. 
 Your goal is to gather specific information through natural conversation to build a campaign profile.
 
-You need to collect the following 5 pieces of information:
-1. **valueProp**: What is the unique value being offered?
-2. **painPoints**: What problems does this solve for the audience? (as an array)
-3. **cta**: What should the audience do? (call-to-action)
-4. **constraints**: Any pricing, geography, timing, or other limitations?
-5. **communicationTone**: What tone should the campaign use? (professional, casual, humorous, etc.)
+You need to collect the following 14 pieces of information:
+1. **audience**: Who is the target audience?
+2. **background**: What is the background or context for this campaign?
+3. **offer**: What is the specific offer or proposition?
+4. **examples**: Are there any examples or references to follow?
+5. **description**: A brief description of the campaign.
+6. **companySize**: What is the target company size?
+7. **industry**: What industry are we targeting?
+8. **targetRoles**: What are the target job titles or roles?
+9. **valueProp**: What is the unique value being offered?
+10. **painPoints**: What problems does this solve for the audience? (as an array)
+11. **cta**: What should the audience do? (call-to-action)
+12. **constraints**: Any pricing, geography, timing, or other limitations?
+13. **communicationTone**: What tone should the campaign use? (professional, casual, humorous, etc.)
+14. **anythingElse**: Any other relevant details or specific instructions?
 
 **Instructions:**
 - Engage in natural conversation to extract this information
-- Ask clarifying questions when needed (one at a time)
+- Ask clarifying questions when needed (group related questions efficiently, don't ask 14 questions one by one if not necessary, but ensure clarity)
 - Be concise and professional
 - Do not hallucinate or assume information not provided
 
@@ -23,11 +33,20 @@ When you have HIGH CONFIDENCE that the user has provided a specific piece of inf
 [FIELD:field_name:value]
 
 Examples:
+[FIELD:audience:Small business owners in the tech sector]
+[FIELD:background:We are launching a new AI feature]
+[FIELD:offer:50% off for the first 3 months]
+[FIELD:examples:Like the recent Slack campaign]
+[FIELD:description:A colder outreach campaign for our new SaaS product]
+[FIELD:companySize:10-50 employees]
+[FIELD:industry:SaaS, Technology]
+[FIELD:targetRoles:CTO, VP of Engineering]
 [FIELD:valueProp:Premium coffee subscription delivered fresh weekly]
 [FIELD:painPoints:["Lack of time to visit coffee shops", "Inconsistent coffee quality"]]
 [FIELD:cta:Start your free trial today]
 [FIELD:constraints:US only, minimum 3-month subscription]
 [FIELD:communicationTone:casual]
+[FIELD:anythingElse:Avoid using buzzwords]
 
 Only emit a FIELD marker when you are certain about the value. Never guess.
 After marking a field, continue your conversational response naturally.
@@ -107,12 +126,12 @@ const handleCampaignChat = async (req, res, next) => {
 
 	try {
 		// Get current session state
-		const currentState = sessionStore.getSession(sessionId);
-		const missingFields = sessionStore.getMissingFields(sessionId);
+		const currentState = await sessionStore.getSession(sessionId);
+		const missingFields = await sessionStore.getMissingFields(sessionId);
 
 		// Build context about what we already know
 		let contextMessage = '';
-		if (missingFields.length < 5) {
+		if (missingFields.length < 14) {
 			contextMessage = `\n\nCurrent campaign information collected so far:\n${JSON.stringify(currentState, null, 2)}\n\nStill needed: ${missingFields.join(', ')}`;
 		}
 
@@ -191,9 +210,9 @@ const handleCampaignChat = async (req, res, next) => {
 
 			// Emit state event if we found new fields
 			if (Object.keys(newFields).length > 0) {
-				sessionStore.updateSession(sessionId, newFields);
+				await sessionStore.updateSession(sessionId, newFields);
 				const updatedMissingFields =
-					sessionStore.getMissingFields(sessionId);
+					await sessionStore.getMissingFields(sessionId);
 				sendStateEvent(res, newFields, updatedMissingFields);
 			}
 		}
@@ -210,14 +229,14 @@ const handleCampaignChat = async (req, res, next) => {
 		// Final check: parse any remaining field markers
 		const finalFields = parseFieldMarkers(accumulatedText);
 		if (Object.keys(finalFields).length > 0) {
-			sessionStore.updateSession(sessionId, finalFields);
+			await sessionStore.updateSession(sessionId, finalFields);
 		}
 
 		// Check if campaign is complete
-		if (sessionStore.isComplete(sessionId)) {
-			const finalState = sessionStore.getSession(sessionId);
+		if (await sessionStore.isComplete(sessionId)) {
+			const finalState = await sessionStore.getSession(sessionId);
 			sendCompleteEvent(res, finalState);
-			sessionStore.deleteSession(sessionId);
+			await sessionStore.deleteSession(sessionId);
 		}
 
 		// Close stream
@@ -233,6 +252,23 @@ const handleCampaignChat = async (req, res, next) => {
 	}
 };
 
+/**
+ * Start a new chat session
+ */
+const startChat = async (req, res) => {
+	const sessionId = crypto.randomUUID();
+	const chatId = crypto.randomUUID();
+
+	// Initialize session in store
+	await sessionStore.getSession(sessionId);
+
+	res.json({
+		sessionId,
+		chatId,
+	});
+};
+
 module.exports = {
 	handleCampaignChat,
+	startChat,
 };

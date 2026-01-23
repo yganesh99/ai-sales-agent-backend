@@ -1,6 +1,6 @@
 /**
  * In-memory session store for campaign state management.
- * Each session maintains a CampaignState object that persists across requests.
+ * Each session maintains a CampaignState object that persists in Redis across requests.
  */
 
 const CAMPAIGN_FIELDS = [
@@ -9,6 +9,15 @@ const CAMPAIGN_FIELDS = [
 	'cta',
 	'constraints',
 	'communicationTone',
+	'audience',
+	'background',
+	'offer',
+	'examples',
+	'description',
+	'companySize',
+	'industry',
+	'targetRoles',
+	'anythingElse',
 ];
 
 const createInitialState = () => ({
@@ -17,33 +26,53 @@ const createInitialState = () => ({
 	cta: null,
 	constraints: null,
 	communicationTone: null,
+	audience: null,
+	background: null,
+	offer: null,
+	examples: null,
+	description: null,
+	companySize: null,
+	industry: null,
+	targetRoles: null,
+	anythingElse: null,
 });
+
+const Redis = require('ioredis');
 
 class SessionStoreService {
 	constructor() {
-		this.sessions = new Map();
+		this.redis = new Redis(process.env.REDIS_HOST);
+		this.ttl = 60 * 60; // 60 minutes in seconds
 	}
 
 	/**
 	 * Get session state, creating initial state if session doesn't exist
 	 * @param {string} sessionId
-	 * @returns {Object} CampaignState
+	 * @returns {Promise<Object>} CampaignState
 	 */
-	getSession(sessionId) {
-		if (!this.sessions.has(sessionId)) {
-			this.sessions.set(sessionId, createInitialState());
+	async getSession(sessionId) {
+		const data = await this.redis.get(`session:${sessionId}`);
+		if (data) {
+			return JSON.parse(data);
 		}
-		return this.sessions.get(sessionId);
+		const initialState = createInitialState();
+		await this.redis.set(
+			`session:${sessionId}`,
+			JSON.stringify(initialState),
+			'EX',
+			this.ttl,
+		);
+		return initialState;
 	}
 
 	/**
 	 * Update session with partial data (merge)
 	 * @param {string} sessionId
 	 * @param {Object} partialData - Partial CampaignState fields to update
-	 * @returns {Object} Updated CampaignState
+	 * @returns {Promise<Object>} Updated CampaignState
 	 */
-	updateSession(sessionId, partialData) {
-		const currentState = this.getSession(sessionId);
+	async updateSession(sessionId, partialData) {
+		const currentState = await this.getSession(sessionId);
 
 		// Only update fields that are in the schema and have non-null values
 		for (const field of CAMPAIGN_FIELDS) {
@@ -55,17 +84,22 @@ class SessionStoreService {
 			}
 		}
 
-		this.sessions.set(sessionId, currentState);
+		await this.redis.set(
+			`session:${sessionId}`,
+			JSON.stringify(currentState),
+			'EX',
+			this.ttl,
+		);
 		return currentState;
 	}
 
 	/**
 	 * Check if all campaign fields are filled
 	 * @param {string} sessionId
-	 * @returns {boolean}
+	 * @returns {Promise<boolean>}
 	 */
-	isComplete(sessionId) {
-		const state = this.getSession(sessionId);
+	async isComplete(sessionId) {
+		const state = await this.getSession(sessionId);
 		return CAMPAIGN_FIELDS.every(
 			(field) => state[field] !== null && state[field] !== undefined,
 		);
@@ -74,10 +108,10 @@ class SessionStoreService {
 	/**
 	 * Get list of fields that are still null
 	 * @param {string} sessionId
-	 * @returns {string[]}
+	 * @returns {Promise<string[]>}
 	 */
-	getMissingFields(sessionId) {
-		const state = this.getSession(sessionId);
+	async getMissingFields(sessionId) {
+		const state = await this.getSession(sessionId);
 		return CAMPAIGN_FIELDS.filter(
 			(field) => state[field] === null || state[field] === undefined,
 		);
@@ -86,16 +120,20 @@ class SessionStoreService {
 	/**
 	 * Delete a session (cleanup)
 	 * @param {string} sessionId
+	 * @returns {Promise<void>}
 	 */
-	deleteSession(sessionId) {
-		this.sessions.delete(sessionId);
+	async deleteSession(sessionId) {
+		await this.redis.del(`session:${sessionId}`);
 	}
 
 	/**
 	 * Clear all sessions (for testing)
 	 */
-	clearAll() {
-		this.sessions.clear();
+	async clearAll() {
+		const keys = await this.redis.keys('session:*');
+		if (keys.length > 0) {
+			await this.redis.del(keys);
+		}
 	}
 }
 

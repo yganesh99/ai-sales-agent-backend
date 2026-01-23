@@ -17,6 +17,8 @@ router.post(
 	campaignChatController.handleCampaignChat,
 );
 
+router.post('/start-chat', campaignChatController.startChat);
+
 router.post(
 	'/',
 	celebrate({
@@ -51,6 +53,20 @@ router.put(
 				painPoints: Joi.string(),
 				cta: Joi.string(),
 				constraints: Joi.string(),
+				communicationTone: Joi.string(),
+				audience: Joi.string(),
+				background: Joi.string(),
+				offer: Joi.string(),
+				examples: Joi.string(),
+				companySize: Joi.string(),
+				industry: Joi.string(),
+				targetRoles: Joi.string(),
+				anythingElse: Joi.string().allow(''),
+				noOfHotLeads: Joi.number(),
+				noOfColdLeads: Joi.number(),
+				totalLeads: Joi.number(),
+				noOfEmailsSent: Joi.number(),
+				responsePercentage: Joi.number(),
 				createdBy: Joi.string(),
 				lastUpdatedBy: Joi.string(),
 			})
