@@ -1,0 +1,26 @@
+const Joi = require('Joi');
+
+module.exports.campaignSchema = {
+	title: Joi.string().required(),
+	description: Joi.string().required(),
+	valueProp: Joi.string().required(),
+	painPoints: Joi.string().required(),
+	cta: Joi.string().required(),
+	constraints: Joi.string().required(),
+	communicationTone: Joi.string().required(),
+	audience: Joi.string().required(),
+	background: Joi.string().required(),
+	offer: Joi.string().required(),
+	examples: Joi.string().required(),
+	companySize: Joi.string().required(),
+	industry: Joi.string().required(),
+	targetRoles: Joi.string().required(),
+	anythingElse: Joi.string().allow('').optional(),
+	noOfHotLeads: Joi.number().optional(),
+	noOfColdLeads: Joi.number().optional(),
+	totalLeads: Joi.number().optional(),
+	noOfEmailsSent: Joi.number().optional(),
+	responsePercentage: Joi.number().optional(),
+	createdBy: Joi.string().required(),
+	lastUpdatedBy: Joi.string().required(),
+};

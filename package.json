@@ -17,6 +17,7 @@
 	"bugs": {},
 	"homepage": "",
 	"dependencies": {
+		"@google/genai": "^1.36.0",
 		"bcryptjs": "^2.4.3",
 		"celebrate": "^15.x",
 		"cors": "^2.8.5",
@@ -27,6 +28,7 @@
 		"jsonwebtoken": "^9.x",
 		"mongoose": "^7.x",
 		"morgan": "^1.10.0",
+		"openai": "^6.16.0",
 		"passport": "^0.7.0",
 		"passport-google-oauth20": "^2.0.0"
 	},

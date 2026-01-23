@@ -1,26 +1,28 @@
 const express = require('express');
 const { celebrate, Joi, Segments } = require('celebrate');
 const campaignController = require('../controllers/campaign.controller');
+const campaignChatController = require('../controllers/campaignChat.controller');
+const { campaignSchema } = require('../schemas/campaign.schema.js');
 
 const router = express.Router();
 
-const campaignSchema = {
-	title: Joi.string().required(),
-	description: Joi.string().required(),
-	valueProp: Joi.string().required(),
-	painPoints: Joi.string().required(),
-	cta: Joi.string().required(),
-	constraints: Joi.string().required(),
-	createdBy: Joi.string().required(),
-	lastUpdatedBy: Joi.string().required(),
-};
+router.post(
+	'/chat',
+	celebrate({
+		[Segments.BODY]: Joi.object().keys({
+			sessionId: Joi.string().required(),
+			message: Joi.string().required(),
+		}),
+	}),
+	campaignChatController.handleCampaignChat,
+);
 
 router.post(
 	'/',
 	celebrate({
 		[Segments.BODY]: Joi.object().keys(campaignSchema),
 	}),
-	campaignController.createCampaign
+	campaignController.createCampaign,
 );
 
 router.get('/', campaignController.getCampaigns);
@@ -32,7 +34,7 @@ router.get(
 			id: Joi.string().required(),
 		}),
 	}),
-	campaignController.getCampaignById
+	campaignController.getCampaignById,
 );
 
 router.put(
@@ -54,7 +56,7 @@ router.put(
 			})
 			.min(1),
 	}),
-	campaignController.updateCampaign
+	campaignController.updateCampaign,
 );
 
 router.delete(
@@ -64,7 +66,7 @@ router.delete(
 			id: Joi.string().required(),
 		}),
 	}),
-	campaignController.deleteCampaign
+	campaignController.deleteCampaign,
 );
 
 module.exports = router;

@@ -26,6 +26,62 @@ const campaignSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		communicationTone: {
+			type: String,
+			required: true,
+		},
+		audience: {
+			type: String,
+			required: true,
+		},
+		background: {
+			type: String,
+			required: true,
+		},
+		offer: {
+			type: String,
+			required: true,
+		},
+		examples: {
+			type: String,
+			required: true, // Assuming required as per others
+		},
+		companySize: {
+			type: String,
+			required: true,
+		},
+		industry: {
+			type: String,
+			required: true,
+		},
+		targetRoles: {
+			type: String,
+			required: true,
+		},
+		anythingElse: {
+			type: String,
+			required: false, // Usually "anything else" implies optional
+		},
+		noOfHotLeads: {
+			type: Number,
+			default: 0,
+		},
+		noOfColdLeads: {
+			type: Number,
+			default: 0,
+		},
+		totalLeads: {
+			type: Number,
+			default: 0,
+		},
+		noOfEmailsSent: {
+			type: Number,
+			default: 0,
+		},
+		responsePercentage: {
+			type: Number,
+			default: 0,
+		},
 		isDeleted: {
 			type: Boolean,
 			default: false,
@@ -41,7 +97,7 @@ const campaignSchema = new mongoose.Schema(
 	},
 	{
 		timestamps: true,
-	}
+	},
 );
 
 campaignSchema.add({
